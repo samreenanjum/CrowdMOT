@@ -1,0 +1,180 @@
+import React, {Component} from 'react';
+import { TwoDimensionalVideo } from "react-annotation-tool"
+import Instructions from "../videoInstruction/videoInstruction"
+import { Container, Row, Col, Card, CardBody, CardTitle, CardText } from 'reactstrap';
+import { Button, Form, FormGroup, Label, Input } from 'reactstrap';
+
+
+class Demo extends Component {
+	constructor(props){
+	    super(props)
+	   // const fs = require('fs');
+	    const defaultAnnotations = [];
+	    const previewNoticeList = [
+		'Body range of the objects',
+		'Time at which the objects <u>leave</u>, <u>obscured</u>, <u>show up</u> and/or <u>split</u> (if applicable).',
+	    ];
+	    const previewHeader = 'Please scan the video and observe the following to help you complete the task:';
+	    const emptyCheckSubmissionWarningText = 'Please annotate AND track one unmarked object to complete this task.';
+	    const emptyCheckAnnotationItemWarningText = 'Step 2: Please track the object bound by this box';
+	    const emptyAnnotationReminderText = 'Step 1: Click the button above to add a new box around a object';
+		
+	    const url = 'https://cildata.crbs.ucsd.edu/media/videos/50507/50507_web.mp4';
+	    const videoWidth = 500;
+
+	    this.fileInput = React.createRef();
+	    this.state = {
+		result: null,
+		input: {
+		    defaultAnnotations: JSON.stringify(defaultAnnotations),
+		    url,
+		    videoWidth,
+		    previewHeader,
+		    previewNoticeList,
+		    emptyCheckSubmissionWarningText,
+		    emptyCheckAnnotationItemWarningText,
+		    emptyAnnotationReminderText,
+		},
+		params: {
+		    defaultAnnotations: [],
+		    url,
+		    videoWidth,
+		    previewHeader,
+		    previewNoticeList,
+		    emptyCheckSubmissionWarningText,
+		    emptyCheckAnnotationItemWarningText,
+		    emptyAnnotationReminderText,
+		}
+	    }
+	}
+	handleResultSubmit = result => {
+		this.setState({ result: result });
+	}
+
+	handleChange = event => {
+		const target = event.target;
+		const name = target.name;
+		const value = target.type === "checkbox" ? target.checked : target.value;
+		this.setState((preState) => {
+			const { input } = preState;
+			return {
+				input: { ...input, [name]: value }
+			}
+
+		})
+	}
+
+	handleSubmit = async event => {
+	    event.preventDefault();
+	    let result = {};
+	    if (this.fileInput.current.files[0]) {
+		const readFilePromise = new Promise( (resolve, reject) => {
+		    const fileReader = new FileReader();
+		    fileReader.onload = event => {
+			if (!this.isJsonString(event.target.result))
+			    reject('Wrong json format');
+
+			let result = JSON.parse(event.target.result);
+			resolve( result )
+		    }
+		    fileReader.onerror = event => {
+			reject(event);
+		    }
+		    fileReader.readAsText(this.fileInput.current.files[0]);
+		})
+		result = await readFilePromise;
+	    }
+
+	    let {url = '', videoWidth = 0, defaultAnnotations = []} = result;
+
+	    this.setState( (preState) => {
+		const { input } = preState;
+		if ( annotations.length === 0 ) {
+		    defaultAnnotations = this.isJsonString(input.defaultAnnotations) ? JSON.parse(input.defaultAnnotations) : [];
+		}
+		return { params: {
+		    defaultAnnotations,
+		    url: url || input.url,
+		    videoWidth: ( videoWidth !== 0 ? videoWidth : parseInt(input.videoWidth, 10) )
+		}
+		       };
+	    }
+			 );
+	}
+
+	isJsonString = str => {
+	    try {
+	        JSON.parse(str);
+	    } catch (e) {
+	        return false;
+	    }
+	    return true;
+	}
+
+	render() {
+		const { result, input, params } = this.state
+	    	    let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(result));
+	    return (
+			<Container fluid className="py-3">
+		    <h1 className="display-4  text-center">CrowdMOT: A Video Annotation Tool</h1>
+			<Row className="my-3 col-xs-12 col-lg-10 offset-lg-1">
+					<Col>
+						<Instructions />
+					</Col>
+				</Row>
+		    <Form className="mb-2 col-xs-12 col-lg-10 offset-lg-1" onSubmit={this.handleSubmit}>
+					<FormGroup>
+		    <Label for="URL"><b>Enter the video URL:</b></Label>
+					  <Input type="text" name="url" placeholder="http://..." value={input.url} onChange={this.handleChange} />
+			        </FormGroup>
+									
+			    </Form>
+	
+				<Row className="py-3" style={{background: "rgb(246, 246, 246)"}}>
+		      		<Col>
+						<TwoDimensionalVideo
+							key= {
+								`${JSON.stringify(params.url)}
+							    ${JSON.stringify(params.defaultAnnotations)}
+							    ${JSON.stringify(params.videoWidth)}
+							    ${JSON.stringify(params.previewHeader)}
+							    ${JSON.stringify(params.previewNoticeList)}`
+							}
+		
+		onSubmit={ this.handleResultSubmit }
+		url={ params.url }
+		annotations = { params.annotations }
+		videoWidth = { params.videoWidth }
+		previewHeader = { params.previewHeader }
+		previewNoticeList = { params.previewNoticeList }
+		hasReview
+		isEmptyCheckEnable
+		isSplitEnable
+		isShowHideEnable
+		numAnnotationsToBeAdded={ 100000 }
+		emptyCheckSubmissionWarningText={ params.emptyCheckSubmissionWarningText }
+		emptyCheckAnnotationItemWarningText={ params.emptyCheckAnnotationItemWarningText }
+		emptyAnnotationReminderText={ params.emptyAnnotationReminderText }
+		
+		    />
+		    </Col>
+		    </Row>
+		    
+		    <Row className="my-3 col-xs-12 col-lg-10 offset-lg-1">
+		    <Col>
+		    <Card><CardBody><a href={dataStr} className="btn btn-secondary btn-lg" download={`${params.url}.json`}> Download the Annotations</a></CardBody></Card>
+		   
+		    
+		</Col>  </Row>
+
+
+	
+		</Container>
+
+	    );
+
+		
+	    
+	}
+}
+export default Demo;
