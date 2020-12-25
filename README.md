@@ -30,7 +30,7 @@ If you find this work helpful, please consider citing the paper:
 
 ## Contact:
 
-If you have any questions, please contact: [Samreen Anjum](https://www.ischool.utexas.edu/~samreen/) - samreen@utexas.edu
+If you have any questions or suggestions, please contact: [Samreen Anjum](https://www.ischool.utexas.edu/~samreen/) - samreen@utexas.edu
 
 
 
